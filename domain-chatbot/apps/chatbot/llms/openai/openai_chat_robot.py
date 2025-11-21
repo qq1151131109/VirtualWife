@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAIGeneration:
-    model_name: str = "gpt-3.5-turbo"
+    model_name: str = "gpt-4o-mini"
     temperature: float = 0.7
     openai_api_key: str
     openai_base_url: str
@@ -85,8 +85,8 @@ class OpenAIGeneration:
                 event_text = event["choices"][0]['delta']['content']
                 if isinstance(event_text, str) and event_text != "":
                     content = event_text
-                    # 过滤空格和制表符
-                    content = remove_spaces_and_tabs(content)
+                    # 不要删除空格！保留原始格式
+                    # content = remove_spaces_and_tabs(content)  # ❌ 已禁用
                     if content == "":
                         continue
                     answer += content

@@ -19,13 +19,9 @@ export async function connect(): Promise<WebSocket> {
         console.log('WebSocket connection established.');
         socket.send('connection success');
     };
+    // 移除自动重连逻辑，由外部管理
     socket.onclose = (event) => {
         console.log('WebSocket connection closed:', event);
-        // 重新连接，每隔1秒尝试一次
-        setTimeout(() => {
-            console.log('Reconnecting...');
-            connect(); // 重新调用connect()函数进行连接
-        }, 1000);
     };
     return socket;
 }

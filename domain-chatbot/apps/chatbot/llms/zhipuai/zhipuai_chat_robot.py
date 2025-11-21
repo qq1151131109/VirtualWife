@@ -58,7 +58,8 @@ class ZhipuAIGeneration:
                 event_text = chunk.choices[0].delta.content
                 print(f">>>> event_text {event_text}")
                 if isinstance(event_text, str) and event_text != "":
-                    content = remove_spaces_and_tabs(event_text)
+                    content = event_text  # 保留空格！
+                    # content = remove_spaces_and_tabs(event_text)  # ❌ 已禁用
                     if content == "":
                         continue
                     answer += content

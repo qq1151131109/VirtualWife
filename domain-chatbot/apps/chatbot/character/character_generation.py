@@ -1,7 +1,8 @@
 from django.shortcuts import get_object_or_404
 from ..models import CustomRoleModel
-# from .character_template_en import EnglishCharacterTemplate
+from .character_template_en import EnglishCharacterTemplate
 from .character_template_zh import ChineseCharacterTemplate
+from .character_template_jp import JapaneseCharacterTemplate
 from .base_character_template import BaseCharacterTemplate
 from .character import Character
 from .sys.aili_zh import aili_zh
@@ -13,8 +14,9 @@ class CharacterGeneration():
     def __init__(self) -> None:
 
         # 加载模型
-        # self.character_template_dict["en"] = EnglishCharacterTemplate()
+        self.character_template_dict["en"] = EnglishCharacterTemplate()
         self.character_template_dict["zh"] = ChineseCharacterTemplate()
+        self.character_template_dict["jp"] = JapaneseCharacterTemplate()
 
     def get_character(self, role_id: int) -> Character:
         '''获取角色定义对象'''

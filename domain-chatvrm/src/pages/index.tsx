@@ -13,6 +13,7 @@ import {connect} from "@/features/blivedm/blivedm";
 import {Introduction} from "@/components/introduction";
 import {Menu} from "@/components/menu";
 import {GitHubLink} from "@/components/githubLink";
+import {IconButton} from "@/components/iconButton";
 import {Meta} from "@/components/meta";
 import {GlobalConfig, getConfig, initialFormData} from "@/features/config/configApi";
 import {buildUrl} from "@/utils/buildUrl";
@@ -31,9 +32,7 @@ import {generateMediaUrl, vrmModelData} from "@/features/media/mediaApi";
 //   subsets: ["latin"],
 // });
 
-let socketInstance: WebSocket | null = null;
-let bind_message_event = false;
-let webGlobalConfig = initialFormData
+let webGlobalConfig = initialFormData;
 
 export default function Home() {
 
@@ -51,6 +50,10 @@ export default function Home() {
     const [backgroundImageUrl, setBackgroundImageUrl] = useState<string>(buildUrl("/bg-c.png"));
     const typingDelay = 100; // 每个字的延迟时间，可以根据需要进行调整
     const MAX_SUBTITLES = 30;
+
+    // 使用 useRef 防止 React 严格模式下的重复初始化
+    const socketInstanceRef = useRef<WebSocket | null>(null);
+    const isInitializedRef = useRef(false);
     const handleSubtitle = (newSubtitle: string) => {
 
         setDisplayedSubtitle((prevSubtitle: string) => {
@@ -65,21 +68,34 @@ export default function Home() {
 
 
     useEffect(() => {
-        if (socketInstance != null) {
-            socketInstance.close()
+        // 防止React严格模式导致的重复执行
+        if (isInitializedRef.current) {
+            console.log('WebSocket already initialized, skipping...');
+            return;
         }
-        if (!bind_message_event) {
-            console.log(">>>> setupWebSocket")
-            bind_message_event = true;
-            setupWebSocket(); // Set up WebSocket when component mounts
+        isInitializedRef.current = true;
+
+        // 清理旧连接
+        if (socketInstanceRef.current != null) {
+            console.log('Closing existing WebSocket connection...');
+            socketInstanceRef.current.close();
+            socketInstanceRef.current = null;
         }
+
+        // 只建立一次WebSocket连接
+        console.log(">>>> setupWebSocket");
+        setupWebSocket();
+
+        // 加载配置
         getConfig().then(data => {
-            webGlobalConfig = data
-            setGlobalConfig(data)
+            webGlobalConfig = data;
+            setGlobalConfig(data);
             if (data.background_url != '') {
-                setBackgroundImageUrl(generateMediaUrl(data.background_url))
+                setBackgroundImageUrl(generateMediaUrl(data.background_url));
             }
-        })
+        });
+
+        // 加载localStorage中的参数
         if (window.localStorage.getItem("chatVRMParams")) {
             const params = JSON.parse(
                 window.localStorage.getItem("chatVRMParams") as string
@@ -88,7 +104,17 @@ export default function Home() {
             setKoeiroParam(params.koeiroParam);
             setChatLog(params.chatLog);
         }
-    }, []);
+
+        // Cleanup函数：组件卸载时关闭WebSocket
+        return () => {
+            console.log('Component unmounting, closing WebSocket...');
+            if (socketInstanceRef.current) {
+                socketInstanceRef.current.close();
+                socketInstanceRef.current = null;
+            }
+            isInitializedRef.current = false;  // 重置标志
+        };
+    }, []); // 空依赖数组，只在组件挂载时执行一次
 
 
     useEffect(() => {
@@ -324,15 +350,30 @@ export default function Home() {
     };
 
     const setupWebSocket = () => {
-
         connect().then((webSocket) => {
-            socketInstance = webSocket;
-            socketInstance.onmessage = handleWebSocketMessage; // Set onmessage listener
-            socketInstance.onclose = (event) => {
+            socketInstanceRef.current = webSocket;
+            socketInstanceRef.current.onmessage = handleWebSocketMessage;
+            socketInstanceRef.current.onclose = (event) => {
                 console.log('WebSocket connection closed:', event);
-                console.log('Reconnecting...');
-                setupWebSocket(); // 重新调用connect()函数进行连接
+                // 只有在非正常关闭时才重连（避免组件卸载时重连）
+                if (event.code !== 1000 && isInitializedRef.current) {
+                    console.log('Reconnecting in 3 seconds...');
+                    setTimeout(() => {
+                        setupWebSocket();
+                    }, 3000);
+                }
             };
+            socketInstanceRef.current.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }).catch(error => {
+            console.error('Failed to connect WebSocket:', error);
+            // 连接失败，3秒后重试
+            if (isInitializedRef.current) {
+                setTimeout(() => {
+                    setupWebSocket();
+                }, 3000);
+            }
         });
     }
 
@@ -350,7 +391,8 @@ export default function Home() {
                 <Meta/>
                 <Introduction openAiKey={openAiKey} onChangeAiKey={setOpenAiKey}/>
                 <VrmViewer globalConfig={globalConfig}/>
-                <div className="flex items-center justify-center">
+                {/* 字幕已隐藏 */}
+                {/* <div className="flex items-center justify-center">
                     <div className="absolute bottom-1/4 z-10" style={{
                         fontFamily: "fzfs",
                         fontSize: "24px",
@@ -358,7 +400,7 @@ export default function Home() {
                     }}>
                         {displayedSubtitle}
                     </div>
-                </div>
+                </div> */}
                 <MessageInputContainer
                     isChatProcessing={chatProcessing}
                     onChatProcessStart={handleSendChat}
@@ -383,6 +425,20 @@ export default function Home() {
                     handleClickResetSystemPrompt={() => setSystemPrompt(SYSTEM_PROMPT)}
                 />
                 <GitHubLink/>
+                {/* 新会话按钮 */}
+                <div className="absolute top-0 right-0 z-10 m-24">
+                    <button
+                        className="bg-primary hover:bg-primary-hover active:bg-primary-press text-white rounded-16 px-16 py-8 font-M_PLUS_2 font-bold"
+                        onClick={() => {
+                            if (confirm('确定要清空对话记录吗？')) {
+                                setChatLog([]);
+                                setDisplayedSubtitle('');
+                            }
+                        }}
+                    >
+                        新会话
+                    </button>
+                </div>
             </div>
         </div>
     )

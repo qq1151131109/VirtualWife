@@ -691,6 +691,25 @@ export const Settings = ({
                         )
                     }
                 </div>
+
+                {/* 重置功能区 */}
+                <div className="section">
+                    <div className="title">对话管理</div>
+                    <div className="field">
+                        <label>清空对话记录和记忆</label>
+                        <div className="flex gap-2 mt-2">
+                            <IconButton
+                                iconName="24/Refresh"
+                                label='清空前端对话记录'
+                                isProcessing={false}
+                                onClick={onClickResetChatLog}
+                            />
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2">
+                            注意：此操作只清空前端显示的对话记录，不会清除AI的记忆系统
+                        </div>
+                    </div>
+                </div>
             </div>
         )
     }

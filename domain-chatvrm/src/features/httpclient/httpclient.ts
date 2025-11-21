@@ -9,8 +9,10 @@ let baseUrl = "";
 let mediaUrl = "";
 
 if (environment === "development") {
-  baseUrl = "http://localhost:8000";
-  mediaUrl = "http://localhost:8000";
+  // 动态获取当前访问的hostname，这样无论通过IP还是localhost访问都能正常工作
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  baseUrl = `http://${hostname}:8000`;
+  mediaUrl = `http://${hostname}:8000`;
 } else if (environment === "production") {
   baseUrl = "/api/chatbot";
   mediaUrl = "/api/media";

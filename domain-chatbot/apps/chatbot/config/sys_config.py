@@ -5,6 +5,9 @@ import os
 from ..llms.llm_model_strategy import LlmModelDriver
 from ..models import CustomRoleModel, SysConfigModel
 from ..character.sys.aili_zh import aili_zh
+from ..character.sys.lily_teacher_zh import lily_teacher_zh
+from ..character.sys.emily_teacher_en import emily_teacher_en
+from ..character.sys.emma_teacher_jp import emma_teacher_jp
 from ..reflection.reflection import ImportanceRating, PortraitAnalysis
 
 config_dir = os.path.dirname(os.path.abspath(__file__))
@@ -93,7 +96,8 @@ class SysConfig:
         try:
             result = CustomRoleModel.objects.all()
             if len(result) == 0:
-                logger.debug("=> load default character")
+                logger.debug("=> load default characters")
+                # 加载默认角色：爱莉
                 custom_role = CustomRoleModel(
                     role_name=aili_zh.role_name,
                     persona=aili_zh.persona,
@@ -104,6 +108,43 @@ class SysConfig:
                     role_package_id=-1
                 )
                 custom_role.save()
+
+                # 加载Lily老师（中文英语老师）
+                lily_role = CustomRoleModel(
+                    role_name=lily_teacher_zh.role_name,
+                    persona=lily_teacher_zh.persona,
+                    personality=lily_teacher_zh.personality,
+                    scenario=lily_teacher_zh.scenario,
+                    examples_of_dialogue=lily_teacher_zh.examples_of_dialogue,
+                    custom_role_template_type=lily_teacher_zh.custom_role_template_type,
+                    role_package_id=-1
+                )
+                lily_role.save()
+
+                # 加载Miss Emily（英文英语老师）
+                emily_role = CustomRoleModel(
+                    role_name=emily_teacher_en.role_name,
+                    persona=emily_teacher_en.persona,
+                    personality=emily_teacher_en.personality,
+                    scenario=emily_teacher_en.scenario,
+                    examples_of_dialogue=emily_teacher_en.examples_of_dialogue,
+                    custom_role_template_type=emily_teacher_en.custom_role_template_type,
+                    role_package_id=-1
+                )
+                emily_role.save()
+
+                # 加载エマ先生（日文英语老师）
+                emma_role = CustomRoleModel(
+                    role_name=emma_teacher_jp.role_name,
+                    persona=emma_teacher_jp.persona,
+                    personality=emma_teacher_jp.personality,
+                    scenario=emma_teacher_jp.scenario,
+                    examples_of_dialogue=emma_teacher_jp.examples_of_dialogue,
+                    custom_role_template_type=emma_teacher_jp.custom_role_template_type,
+                    role_package_id=-1
+                )
+                emma_role.save()
+                logger.debug("=> loaded 4 default characters successfully")
         except Exception as e:
             logger.error("=> load default character ERROR: %s" % str(e))
 
@@ -188,6 +229,7 @@ class SysConfig:
                 sys_config_json=sys_config_json, sys_cofnig=self)
         except Exception as e:
             logger.error("init memory_storage error: %s" % str(e))
+            self.memory_storage_driver = None
 
         logger.info("=> Load SysConfig Success")
 

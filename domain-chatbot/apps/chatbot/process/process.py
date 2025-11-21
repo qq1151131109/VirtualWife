@@ -50,10 +50,15 @@ class ProcessCore():
                 character)
 
             # 检索关联的短期记忆和长期记忆
-            short_history = singleton_sys_config.memory_storage_driver.search_short_memory(
-                query_text=query, you_name=you_name, role_name=role_name)
-            long_history = singleton_sys_config.memory_storage_driver.search_lang_memory(
-                query_text=query, you_name=you_name, role_name=role_name)
+            if singleton_sys_config.memory_storage_driver is not None:
+                short_history = singleton_sys_config.memory_storage_driver.search_short_memory(
+                    query_text=query, you_name=you_name, role_name=role_name)
+                long_history = singleton_sys_config.memory_storage_driver.search_lang_memory(
+                    query_text=query, you_name=you_name, role_name=role_name)
+            else:
+                # 如果记忆存储驱动未初始化，使用空历史
+                short_history = []
+                long_history = ""
 
             current_time = get_current_time_str()
             prompt = prompt.format(

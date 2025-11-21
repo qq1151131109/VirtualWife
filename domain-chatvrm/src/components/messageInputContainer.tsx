@@ -69,7 +69,7 @@ export const MessageInputContainer = ({
       return;
     }
     const recognition = new SpeechRecognition();
-    recognition.lang = "zh-cn";
+    recognition.lang = "en-US";  // 改为英文识别
     recognition.interimResults = true; // 認識の途中結果を返す
     recognition.continuous = false; // 発言の終了時に認識を終了する
 
